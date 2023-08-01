@@ -5,39 +5,37 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedDate
-import studio.hcmc.board.domain.ArticleDomain
-import studio.hcmc.board.dto.ArticleDTO
+import studio.hcmc.board.domain.CommentDomain
 import studio.hcmc.board.dto.CommentDTO
-import studio.hcmc.board.vo.ArticleVO
+import studio.hcmc.board.vo.CommentVO
 import studio.hcmc.jpa.converter.KotlinInstantConverter
 import studio.hcmc.kotlin.protocol.DataTransferObjectConsumer
 import studio.hcmc.kotlin.protocol.ValueObjectConverter
 
 @Entity
-@Table(name = "Article")
-class ArticleEntity(
-    id: Long = 0,
-    boardId: Long = 0,
-    title: String = "",
+@Table(name = "Comment")
+class CommentEntity(
+    id: Long = 0L,
+    articleId: Long = 0L,
     body: String = "",
     writerNickname: String = "",
     writerPassword: String = "",
     writerAddress: String = "",
-    writtenAt: Instant = Instant.fromEpochMilliseconds(0),
+    writtenAt: Instant = Clock.System.now(),
     lastModifiedAt: Instant? = null
-) : ValueObjectConverter<ArticleVO>, DataTransferObjectConsumer<ArticleDTO>, ArticleDomain<Long, Long> {
+) : ValueObjectConverter<CommentVO>,
+    DataTransferObjectConsumer<CommentDTO>,
+    CommentDomain<Long, Long>
+{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", unique = true, nullable = false, insertable = false, updatable = false, columnDefinition = "BIGINT")
     override var id = id
 
-    @Column(name = "boardId", nullable = false, updatable = false, columnDefinition = "BIGINT")
-    override var boardId = boardId
+    @Column(name = "articleId", nullable = false, updatable = false, columnDefinition = "BIGINT")
+    override var articleId = articleId
 
-    @Column(name = "title", nullable = false, length = 200)
-    override var title = title
-
-    @Column(name = "body", nullable = false, length = 2000)
+    @Column(name = "body", nullable = false, length = 200)
     override var body = body
 
     @Column(name = "writerNickname", nullable = false, length = 20)
@@ -59,10 +57,9 @@ class ArticleEntity(
     @Convert(converter = KotlinInstantConverter::class)
     override var lastModifiedAt = lastModifiedAt
 
-    override fun toValueObject() = ArticleVO(
+    override fun toValueObject() = CommentVO(
         id = id,
-        boardId = boardId,
-        title = title,
+        articleId = articleId,
         body = body,
         writerNickname = writerNickname,
         writerPassword = writerPassword,
@@ -71,22 +68,21 @@ class ArticleEntity(
         lastModifiedAt = lastModifiedAt
     )
 
-    override fun fromDataTransferObject(dto: ArticleDTO) {
+    override fun fromDataTransferObject(dto: CommentDTO) {
         when (dto) {
-            is ArticleDTO.Post -> fromDataTransferObject(dto)
-            is ArticleDTO.Put -> fromDataTransferObject(dto)
+            is CommentDTO.Post -> fromDataTransferObject(dto)
+            is CommentDTO.Put -> fromDataTransferObject(dto)
         }
     }
 
-    private fun fromDataTransferObject(dto: ArticleDTO.Post) {
-        this.title = dto.title
+    private fun fromDataTransferObject(dto: CommentDTO.Post) {
         this.body = dto.body
         this.writerNickname = dto.writerNickname
         this.writerPassword = dto.writerPassword
+        this.writerAddress = dto.writerAddress
     }
 
-    private fun fromDataTransferObject(dto: ArticleDTO.Put) {
-        this.title = dto.title
+    private fun fromDataTransferObject(dto: CommentDTO.Put) {
         this.body = dto.body
         this.lastModifiedAt = Clock.System.now()
     }
