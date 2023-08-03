@@ -11,6 +11,7 @@ import studio.hcmc.board.dto.CommentDTO
 import studio.hcmc.board.vo.ArticleVO
 import studio.hcmc.jpa.converter.KotlinInstantConverter
 import studio.hcmc.kotlin.protocol.DataTransferObjectConsumer
+import studio.hcmc.kotlin.protocol.QualifiedValueObjectConvertor
 import studio.hcmc.kotlin.protocol.ValueObjectConverter
 
 @Entity
@@ -25,7 +26,12 @@ class ArticleEntity(
     writerAddress: String = "",
     writtenAt: Instant = Instant.fromEpochMilliseconds(0),
     lastModifiedAt: Instant? = null
-) : ValueObjectConverter<ArticleVO>, DataTransferObjectConsumer<ArticleDTO>, ArticleDomain<Long, Long> {
+) :
+    ValueObjectConverter<ArticleVO>,
+    QualifiedValueObjectConvertor<ArticleVO.Qualified>,
+    DataTransferObjectConsumer<ArticleDTO>,
+    ArticleDomain<Long, Long>
+{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", unique = true, nullable = false, insertable = false, updatable = false, columnDefinition = "BIGINT")
@@ -59,9 +65,27 @@ class ArticleEntity(
     @Convert(converter = KotlinInstantConverter::class)
     override var lastModifiedAt = lastModifiedAt
 
+    @MapsId("boardId")
+    @JoinColumn(name = "boardId", insertable = false, updatable = false)
+    @ManyToOne(targetEntity = BoardEntity::class)
+    lateinit var board: BoardEntity
+
     override fun toValueObject() = ArticleVO(
         id = id,
         boardId = boardId,
+        title = title,
+        body = body,
+        writerNickname = writerNickname,
+        writerPassword = writerPassword,
+        writerAddress = writerAddress,
+        writtenAt = writtenAt,
+        lastModifiedAt = lastModifiedAt
+    )
+
+    override fun toQualifiedValueObject() = ArticleVO.Qualified(
+        id = id,
+        boardId = boardId,
+        board = board.toQualifiedValueObject(),
         title = title,
         body = body,
         writerNickname = writerNickname,

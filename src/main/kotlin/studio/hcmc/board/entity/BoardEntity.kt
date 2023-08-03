@@ -5,6 +5,7 @@ import studio.hcmc.board.domain.BoardDomain
 import studio.hcmc.board.dto.BoardDTO
 import studio.hcmc.board.vo.BoardVO
 import studio.hcmc.kotlin.protocol.DataTransferObjectConsumer
+import studio.hcmc.kotlin.protocol.QualifiedValueObjectConvertor
 import studio.hcmc.kotlin.protocol.ValueObjectConverter
 
 @Entity
@@ -12,7 +13,12 @@ import studio.hcmc.kotlin.protocol.ValueObjectConverter
 class BoardEntity(
     id: Long = 0,
     name: String = ""
-) : ValueObjectConverter<BoardVO>, DataTransferObjectConsumer<BoardDTO>, BoardDomain<Long> {
+) :
+    ValueObjectConverter<BoardVO>,
+    QualifiedValueObjectConvertor<BoardVO.Qualified>,
+    DataTransferObjectConsumer<BoardDTO>,
+    BoardDomain<Long>
+{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", unique = true, nullable = false, insertable = false, updatable = false, columnDefinition = "BIGINT")
@@ -22,6 +28,11 @@ class BoardEntity(
     override var name = name
 
     override fun toValueObject() = BoardVO(
+        id = id,
+        name = name
+    )
+
+    override fun toQualifiedValueObject() = BoardVO.Qualified(
         id = id,
         name = name
     )

@@ -10,6 +10,7 @@ import studio.hcmc.board.dto.CommentDTO
 import studio.hcmc.board.vo.CommentVO
 import studio.hcmc.jpa.converter.KotlinInstantConverter
 import studio.hcmc.kotlin.protocol.DataTransferObjectConsumer
+import studio.hcmc.kotlin.protocol.QualifiedValueObjectConvertor
 import studio.hcmc.kotlin.protocol.ValueObjectConverter
 
 @Entity
@@ -24,6 +25,7 @@ class CommentEntity(
     writtenAt: Instant = Clock.System.now(),
     lastModifiedAt: Instant? = null
 ) : ValueObjectConverter<CommentVO>,
+    QualifiedValueObjectConvertor<CommentVO.Qualified>,
     DataTransferObjectConsumer<CommentDTO>,
     CommentDomain<Long, Long>
 {
@@ -57,9 +59,26 @@ class CommentEntity(
     @Convert(converter = KotlinInstantConverter::class)
     override var lastModifiedAt = lastModifiedAt
 
+    @MapsId("articleId")
+    @JoinColumn(name = "articleId", insertable = false, updatable = false)
+    @ManyToOne(targetEntity = ArticleEntity::class)
+    lateinit var article: ArticleEntity
+
     override fun toValueObject() = CommentVO(
         id = id,
         articleId = articleId,
+        body = body,
+        writerNickname = writerNickname,
+        writerPassword = writerPassword,
+        writerAddress = writerAddress,
+        writtenAt = writtenAt,
+        lastModifiedAt = lastModifiedAt
+    )
+
+    override fun toQualifiedValueObject() = CommentVO.Qualified(
+        id = id,
+        articleId = articleId,
+        article = article.toQualifiedValueObject(),
         body = body,
         writerNickname = writerNickname,
         writerPassword = writerPassword,
@@ -79,7 +98,6 @@ class CommentEntity(
         this.body = dto.body
         this.writerNickname = dto.writerNickname
         this.writerPassword = dto.writerPassword
-        this.writerAddress = dto.writerAddress
     }
 
     private fun fromDataTransferObject(dto: CommentDTO.Put) {
